@@ -145,13 +145,13 @@ class PathAttributesFetcher(
                     }
                 }
             }
-            mimeType.isPdf && (path.isLinuxPath || path.isDocumentPath) -> {
+            /*mimeType.isPdf && (path.isLinuxPath || path.isDocumentPath) -> {
                 try {
                     return pdfPageFetcherFactory.create(path, options, imageLoader).fetch()
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
-            }
+            }*/
         }
         return null
     }
