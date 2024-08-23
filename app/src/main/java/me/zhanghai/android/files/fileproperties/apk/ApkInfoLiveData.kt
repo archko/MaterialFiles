@@ -49,23 +49,23 @@ class ApkInfoLiveData(path: Path) : PathObserverLiveData<Stateful<ApkInfo>>(path
                     val signingCertificates = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                         // PackageInfo.signatures returns only the oldest certificate if there are
                         // past certificates on P and above for compatibility.
-                        packageInfo.signingInfo.apkContentsSigners ?: emptyArray()
+                        packageInfo.signingInfo?.apkContentsSigners ?: emptyArray()
                     } else {
                         @Suppress("DEPRECATION")
                         packageInfo.signatures
                     }
                     val signingCertificateDigests = signingCertificates
-                        .map { it.toByteArray().sha1Digest().toHexString() }
+                        ?.map { it.toByteArray().sha1Digest().toHexString() }
                     val pastSigningCertificates =
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                             val signingInfo = packageInfo.signingInfo
                             // SigningInfo.getSigningCertificateHistory() may return the current
                             // certificate if there are no past certificates.
-                            if (signingInfo.hasPastSigningCertificates()) {
+                            if (null != signingInfo && signingInfo.hasPastSigningCertificates()) {
                                 // SigningInfo.getSigningCertificateHistory() also returns the
                                 // current certificate.
                                 signingInfo.signingCertificateHistory?.toMutableList()
-                                    ?.apply { removeAll(signingCertificates) }
+                                    ?.apply { removeAll(signingCertificates!!) }
                             } else {
                                 null
                             }
@@ -75,7 +75,7 @@ class ApkInfoLiveData(path: Path) : PathObserverLiveData<Stateful<ApkInfo>>(path
                     val pastSigningCertificateDigests = pastSigningCertificates
                         .map { it.toByteArray().sha1Digest().toHexString() }
                     ApkInfo(
-                        packageInfo, label, signingCertificateDigests, pastSigningCertificateDigests
+                        packageInfo, label, signingCertificateDigests!!, pastSigningCertificateDigests
                     )
                 }
                 Success(apkInfo)
