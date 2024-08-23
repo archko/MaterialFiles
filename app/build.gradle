@@ -17,11 +17,11 @@ buildscript {
     }
     dependencies {
         classpath 'com.google.gms:google-services:4.4.2'
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.2'
+        //classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.2'
     }
 }
 apply plugin: 'com.google.gms.google-services'
-apply plugin: 'com.google.firebase.crashlytics'
+//apply plugin: 'com.google.firebase.crashlytics'
 //#endif
 
 android {
@@ -73,15 +73,23 @@ android {
         warning 'InvalidPackage', 'MissingTranslation'
     }
     buildTypes {
+        debug {
+            signingConfig signingConfigs.release
+            //minifyEnabled true
+            jniDebuggable true
+            //proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+        }
+
         release {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
 //#ifdef NONFREE
-            firebaseCrashlytics {
-                nativeSymbolUploadEnabled true
-            }
+            //firebaseCrashlytics {
+            //    nativeSymbolUploadEnabled false
+            //    mappingFileUploadEnabled false
+            //}
 //#endif
         }
     }
@@ -99,6 +107,12 @@ android {
     bundle {
         language {
             enableSplit = false
+        }
+    }
+
+    applicationVariants.configureEach { variant ->
+        variant.outputs.configureEach { output ->
+            outputFileName = "MaterialFiles-${variant.versionName}.apk"
         }
     }
 }
@@ -211,8 +225,8 @@ dependencies {
     implementation 'org.slf4j:slf4j-android:1.7.36'
 
 //#ifdef NONFREE
-    implementation platform('com.google.firebase:firebase-bom:33.1.1')
-    implementation 'com.google.firebase:firebase-analytics'
-    implementation 'com.google.firebase:firebase-crashlytics-ndk'
+    //implementation platform('com.google.firebase:firebase-bom:33.1.1')
+    //implementation 'com.google.firebase:firebase-analytics'
+    //implementation 'com.google.firebase:firebase-crashlytics-ndk'
 //#endif
 }

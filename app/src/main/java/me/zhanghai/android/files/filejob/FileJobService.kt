@@ -39,7 +39,8 @@ class FileJobService : Service() {
         instance = this
 
         while (pendingJobs.isNotEmpty()) {
-            startJob(pendingJobs.removeFirst())
+            val job = pendingJobs.removeAt(0)
+            startJob(job)
         }
     }
 

@@ -1553,7 +1553,7 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
     }
 
     private fun ensureNotificationPermission() {
-        if (viewModel.isNotificationPermissionRequested) {
+        /*if (viewModel.isNotificationPermissionRequested) {
             return
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -1568,7 +1568,7 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
                 }
                 viewModel.isNotificationPermissionRequested = true
             }
-        }
+        }*/
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
