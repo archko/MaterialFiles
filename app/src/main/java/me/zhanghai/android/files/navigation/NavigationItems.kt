@@ -279,15 +279,15 @@ private val DEFAULT_STANDARD_DIRECTORIES = listOf(
         Environment.DIRECTORY_DOCUMENTS, false),
     StandardDirectory(
         R.drawable.download_icon_white_24dp, R.string.navigation_standard_directory_downloads,
-        Environment.DIRECTORY_DOWNLOADS, true
+        Environment.DIRECTORY_DOWNLOADS, false
     ),
     StandardDirectory(
         R.drawable.video_icon_white_24dp, R.string.navigation_standard_directory_movies,
-        Environment.DIRECTORY_MOVIES, true
+        Environment.DIRECTORY_MOVIES, false
     ),
     StandardDirectory(
         R.drawable.audio_icon_white_24dp, R.string.navigation_standard_directory_music,
-        Environment.DIRECTORY_MUSIC, true
+        Environment.DIRECTORY_MUSIC, false
     ),
     StandardDirectory(
         R.drawable.notification_icon_white_24dp,
@@ -309,17 +309,17 @@ private val DEFAULT_STANDARD_DIRECTORIES = listOf(
     StandardDirectory(
         R.drawable.qq_icon_white_24dp, R.string.navigation_standard_directory_qq,
         listOf("Android/data/com.tencent.mobileqq/Tencent/QQfile_recv", "Tencent/QQfile_recv")
-            .joinToString(relativePathSeparator), true
+            .joinToString(relativePathSeparator), false
     ),
     StandardDirectory(
         R.drawable.tim_icon_white_24dp, R.string.navigation_standard_directory_tim,
         listOf("Android/data/com.tencent.tim/Tencent/TIMfile_recv", "Tencent/TIMfile_recv")
-            .joinToString(relativePathSeparator), true
+            .joinToString(relativePathSeparator), false
     ),
     StandardDirectory(
         R.drawable.wechat_icon_white_24dp, R.string.navigation_standard_directory_wechat,
         listOf("Android/data/com.tencent.mm/MicroMsg/Download", "Tencent/MicroMsg/Download")
-            .joinToString(relativePathSeparator), true
+            .joinToString(relativePathSeparator), false
     )
 )
 
