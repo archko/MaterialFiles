@@ -21,6 +21,7 @@ import android.window.OnBackInvokedDispatcher
 import androidx.activity.OnBackPressedCallback
 import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -45,6 +46,7 @@ import me.zhanghai.android.files.util.ParcelableParceler
 import me.zhanghai.android.files.util.ParcelableState
 import me.zhanghai.android.files.util.displayWidth
 import me.zhanghai.android.files.util.extraPath
+import me.zhanghai.android.files.util.mediumAnimTime
 import me.zhanghai.android.files.viewer.pdf.video.ExoSourceFactory
 import me.zhanghai.android.systemuihelper.SystemUiHelper
 import java.util.Locale
@@ -150,6 +152,12 @@ open class MExoPlayerActivity : AppActivity() {
         styledPlayerView = findViewById(R.id.styled_player_view)
         touchPlayerView = findViewById(R.id.touch_player_view)
         tips = findViewById(R.id.tips)
+
+        systemUiHelper = SystemUiHelper(
+            this, SystemUiHelper.LEVEL_IMMERSIVE, SystemUiHelper.FLAG_IMMERSIVE_STICKY
+        ) { visible: Boolean ->
+        }
+        systemUiHelper.hide()
 
         //去除字幕背景
         val captionStyleCompat = CaptionStyleCompat(
