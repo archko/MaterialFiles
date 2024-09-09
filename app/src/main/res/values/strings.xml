@@ -694,6 +694,7 @@
     <string name="navigation_about" translatable="false">@string/about_title</string>
 
     <string name="pdf_viewer_title" translatable="false">Pdf viewer</string>
+    <string name="video_player_title" translatable="false">Video Player</string>
     <string name="archive_viewer_title">Archive viewer</string>
     <string name="image_viewer_title">Image viewer</string>
     <string name="image_viewer_subtitle_format">%1$,d/%2$,d</string>
@@ -801,4 +802,8 @@
 
     <string name="shortcut_downloads_title" translatable="false">@string/navigation_standard_directory_downloads</string>
     <string name="shortcut_ftp_server_title" translatable="false">@string/ftp_server_title</string>
+
+    <string name="player_tip_3speed" translatable="false">3 speed</string>
+    <string name="player_tip_volume" translatable="false">Volume:%s</string>
+    <string name="player_tip_brightness" translatable="false">Brightness:%s</string>
 </resources>

@@ -45,6 +45,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.lifecycle.LifecycleOwner
+import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -71,6 +72,7 @@ import me.zhanghai.android.files.file.fileProviderUri
 import me.zhanghai.android.files.file.isApk
 import me.zhanghai.android.files.file.isImage
 import me.zhanghai.android.files.file.isPdf
+import me.zhanghai.android.files.file.isVideo
 import me.zhanghai.android.files.filejob.FileJobService
 import me.zhanghai.android.files.filelist.FileSortOptions.By
 import me.zhanghai.android.files.filelist.FileSortOptions.Order
@@ -99,6 +101,7 @@ import me.zhanghai.android.files.ui.ToolbarActionMode
 import me.zhanghai.android.files.util.*
 import me.zhanghai.android.files.viewer.image.ImageViewerActivity
 import me.zhanghai.android.files.viewer.pdf.PdfViewerActivity
+import me.zhanghai.android.files.viewer.video.MExoPlayerActivity
 import kotlin.math.roundToInt
 
 class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.Listener,
@@ -1208,6 +1211,7 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         viewModel.selectFiles(files, selected)
     }
 
+    @UnstableApi
     override fun openFile(file: FileItem) {
         val pickOptions = viewModel.pickOptions
         if (pickOptions != null) {
@@ -1264,10 +1268,12 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         navigateTo(file.listablePath)
     }
 
+    @UnstableApi
     override fun openFileWith(file: FileItem) {
         openFileWithIntent(file, true)
     }
 
+    @UnstableApi
     private fun openFileWithIntent(file: FileItem, withChooser: Boolean) {
         val path = file.path
         val mimeType = file.mimeType
@@ -1279,6 +1285,7 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
                 .apply {
                     extraPath = path
                     maybeAddPdfViewerActivityExtras(this, path, mimeType)
+                    maybeAddVideoViewerActivityExtras(this, path, mimeType)
                     maybeAddImageViewerActivityExtras(this, path, mimeType)
                 }
                 .let {
@@ -1303,6 +1310,15 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         }
 
         PdfViewerActivity.putExtras(intent, path)
+    }
+
+    @UnstableApi
+    private fun maybeAddVideoViewerActivityExtras(intent: Intent, path: Path, mimeType: MimeType) {
+        if (!mimeType.isVideo) {
+            return
+        }
+
+        MExoPlayerActivity.putExtras(intent, path)
     }
 
     private fun maybeAddImageViewerActivityExtras(intent: Intent, path: Path, mimeType: MimeType) {

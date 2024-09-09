@@ -6,6 +6,7 @@
 package me.zhanghai.android.files.viewer.pdf
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.commit
@@ -26,6 +27,10 @@ class PdfViewerActivity : AppActivity() {
                 .putArgs(PdfViewerFragment.Args(intent))
             supportFragmentManager.commit { add(android.R.id.content, fragment) }
         }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
     }
 
     companion object {

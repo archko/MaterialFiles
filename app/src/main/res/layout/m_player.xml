@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?><!-- -->
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black">
+    android:background="@android:color/black">
 
     <androidx.media3.ui.PlayerView
         android:id="@+id/styled_player_view"
@@ -31,11 +30,11 @@
         android:paddingTop="8dp"
         android:paddingRight="16dp"
         android:paddingBottom="8dp"
-        android:textColor="@color/white"
+        android:textColor="@android:color/white"
         android:textSize="17sp"
         android:visibility="gone"
         tools:text="音量1"
-        tools:visibility="visible"/>
+        tools:visibility="visible" />
 
     <View
         android:id="@+id/touch_player_view"
@@ -43,7 +42,7 @@
         android:layout_height="match_parent"
         android:layout_marginTop="44dp"
         android:layout_marginBottom="80dp"
-        android:clickable="true"/>
+        android:clickable="true" />
 
     <ProgressBar
         android:id="@+id/progress_waiting"
@@ -55,14 +54,14 @@
         android:indeterminate="true"
         android:indeterminateDrawable="@drawable/progress_drawable"
         android:visibility="visible"
-        tools:visibility="visible"/>
+        tools:visibility="visible" />
 
     <RelativeLayout
         android:id="@+id/layout_titlebar"
         android:layout_width="match_parent"
         android:layout_height="44dp"
         android:layout_gravity="center_vertical"
-        android:background="@color/bottom_bar_background"
+        android:background="#77000000"
         android:layoutDirection="ltr"
         android:orientation="vertical"
         android:paddingLeft="10dp"
@@ -78,17 +77,17 @@
             android:paddingTop="0dp"
             android:paddingBottom="0dp"
             android:singleLine="true"
-            android:textColor="@color/white"
+            android:textColor="@android:color/white"
             android:textSize="17sp"
-            tools:text="亮剑"/>
+            tools:text="亮剑" />
 
         <ImageView
             android:id="@+id/back"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_centerVertical="true"
-            android:layout_marginLeft="6dp"
-            android:src="@drawable/v_back"/>
+            android:layout_marginEnd="4dp"
+            android:src="@drawable/arrow_left" />
 
     </RelativeLayout>
 
@@ -98,7 +97,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_gravity="bottom"
-        android:background="@color/bottom_bar_background"
+        android:background="#77000000"
         android:layoutDirection="ltr"
         android:orientation="vertical"
         android:paddingTop="0dp">
@@ -119,7 +118,7 @@
                 android:layout_gravity="center_vertical"
                 android:minWidth="56dp"
                 android:text="00:00:00"
-                android:textColor="#ACB3C1"/>
+                android:textColor="#ACB3C1" />
 
             <SeekBar
                 android:id="@+id/progress"
@@ -135,7 +134,7 @@
                 android:progressDrawable="@drawable/seek_progress"
                 android:thumb="@drawable/ic_seekbar_thumb_pressed"
                 android:thumbOffset="0dp"
-                tools:progress="0"/>
+                tools:progress="0" />
 
             <TextView
                 android:id="@+id/duration"
@@ -143,7 +142,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:text="00:00:00"
-                android:textColor="#ACB3C1"/>
+                android:textColor="#ACB3C1" />
 
         </LinearLayout>
 
@@ -160,15 +159,14 @@
 
             <ImageView
                 android:id="@+id/btn_audio"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginLeft="6dp"
                 android:layout_marginRight="6dp"
-                android:background="@drawable/selector"
                 android:clickable="true"
                 android:focusable="true"
                 android:padding="2dp"
-                android:src="@drawable/v_audio"/>
+                android:visibility="gone" />
 
             <ImageView
                 android:id="@+id/btn_play"
@@ -176,13 +174,12 @@
                 android:layout_height="36dp"
                 android:layout_marginLeft="6dp"
                 android:layout_marginRight="6dp"
-                android:background="@drawable/selector"
                 android:clickable="true"
                 android:focusable="true"
                 android:focusedByDefault="true"
                 android:padding="2dp"
                 android:src="@drawable/v_play"
-                android:visibility="visible"/>
+                android:visibility="visible" />
 
             <TextView
                 android:id="@+id/btn_speed"
@@ -190,101 +187,31 @@
                 android:layout_height="36dp"
                 android:layout_marginLeft="6dp"
                 android:layout_marginRight="6dp"
-                android:background="@drawable/selector"
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center"
                 android:paddingLeft="6dp"
                 android:paddingRight="6dp"
                 android:text="倍速"
-                android:textColor="@color/white"
+                android:textColor="@android:color/white"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:visibility="gone"
-                tools:visibility="visible"/>
+                tools:visibility="visible" />
 
             <ImageView
                 android:id="@+id/btn_orientation"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginLeft="6dp"
                 android:layout_marginRight="6dp"
-                android:background="@drawable/selector"
                 android:clickable="true"
                 android:focusable="true"
-                android:src="@drawable/ic_play_fanzhuan"
-                android:visibility="visible"/>
-
-            <ImageView
-                android:id="@+id/btn_more"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_marginLeft="6dp"
-                android:layout_marginRight="6dp"
-                android:background="@drawable/selector"
-                android:clickable="true"
-                android:focusable="true"
-                android:padding="6dp"
-                android:src="@drawable/ic_play_more"
-                android:visibility="gone"/>
+                android:src="@drawable/ic_rotate_landscape"
+                android:visibility="visible" />
 
         </LinearLayout>
 
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/layout_error"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:background="@drawable/bg_rounded"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:padding="20dp"
-        android:visibility="gone"
-        tools:visibility="gone">
-
-        <TextView
-            android:id="@+id/error_message"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
-            android:textColor="@color/white"
-            android:textSize="18sp"
-            tools:text="媒体资源不存在"/>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/btn_replay"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="8dp"
-                android:layout_marginRight="8dp"
-                android:background="@drawable/btn_left"
-                android:clickable="true"
-                android:focusable="true"
-                android:text="重播"
-                android:textColor="@color/white"/>
-
-            <Button
-                android:id="@+id/btn_exit"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="8dp"
-                android:layout_marginRight="8dp"
-                android:background="@drawable/btn_right"
-                android:clickable="true"
-                android:focusable="true"
-                android:text="退出"
-                android:textColor="#4784f8"/>
-        </LinearLayout>
     </LinearLayout>
 
     <ImageView
@@ -293,9 +220,9 @@
         android:layout_height="48dp"
         android:layout_centerVertical="true"
         android:layout_marginStart="20dp"
-        android:padding="8dp"
         android:background="@drawable/bg_popup_rounded"
+        android:padding="8dp"
         android:src="@drawable/ic_unlock"
-        android:visibility="visible"/>
+        android:visibility="visible" />
 
 </RelativeLayout>

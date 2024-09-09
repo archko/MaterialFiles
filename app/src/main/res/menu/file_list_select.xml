@@ -12,6 +12,13 @@
     tools:ignore="AlwaysShowAction">
 
     <item
+        android:id="@+id/action_select_all"
+        android:alphabeticShortcut="a"
+        android:orderInCategory="100"
+        android:title="@string/select_all"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_cut"
         android:alphabeticShortcut="x"
         android:icon="@drawable/cut_icon_control_normal_24dp"
@@ -50,12 +57,5 @@
         android:id="@+id/action_share"
         android:orderInCategory="100"
         android:title="@string/share"
-        app:showAsAction="never" />
-
-    <item
-        android:id="@+id/action_select_all"
-        android:alphabeticShortcut="a"
-        android:orderInCategory="100"
-        android:title="@string/select_all"
         app:showAsAction="never" />
 </menu>

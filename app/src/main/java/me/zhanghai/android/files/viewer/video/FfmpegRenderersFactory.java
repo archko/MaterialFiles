@@ -1,4 +1,4 @@
-package me.zhanghai.android.files.viewer.pdf.video;
+package me.zhanghai.android.files.viewer.video;
 
 import android.content.Context;
 import android.os.Handler;

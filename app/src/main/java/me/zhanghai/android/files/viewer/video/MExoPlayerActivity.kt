@@ -1,4 +1,4 @@
-package me.zhanghai.android.files.viewer.pdf.video
+package me.zhanghai.android.files.viewer.video
 
 import android.content.Context
 import android.content.Intent
@@ -11,8 +11,8 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.text.TextUtils
+import android.util.Log
 import android.view.View
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.TextView
@@ -21,9 +21,6 @@ import android.window.OnBackInvokedDispatcher
 import androidx.activity.OnBackPressedCallback
 import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
-import me.zhanghai.android.files.app.AppActivity
-import me.zhanghai.android.files.util.extraPath
-import me.zhanghai.android.files.util.putArgs
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -38,14 +35,33 @@ import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.CaptionStyleCompat.EDGE_TYPE_NONE
 import androidx.media3.ui.DefaultTrackNameProvider
 import androidx.media3.ui.PlayerView
-import timber.log.Timber
+import java8.nio.file.Path
+import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.WriteWith
+import me.zhanghai.android.files.R
+import me.zhanghai.android.files.app.AppActivity
+import me.zhanghai.android.files.util.ParcelableArgs
+import me.zhanghai.android.files.util.ParcelableParceler
+import me.zhanghai.android.files.util.ParcelableState
+import me.zhanghai.android.files.util.displayWidth
+import me.zhanghai.android.files.util.extraPath
+import me.zhanghai.android.files.viewer.pdf.video.ExoSourceFactory
+import me.zhanghai.android.systemuihelper.SystemUiHelper
 import java.util.Locale
 
 /**
  * @author: archko 2023/6/26 :14:14
  */
 @UnstableApi
-open class MExoPlayerActivity : AppCompatActivity() {
+open class MExoPlayerActivity : AppActivity() {
+
+    @Parcelize
+    class Args(val intent: Intent) : ParcelableArgs
+
+    @Parcelize
+    private class State(val path: @WriteWith<ParcelableParceler> Path) : ParcelableState
+
+    private lateinit var systemUiHelper: SystemUiHelper
 
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var updateVisibilityAction: Runnable
@@ -61,7 +77,6 @@ open class MExoPlayerActivity : AppCompatActivity() {
     private var videoPlayerDelegate: VideoPlayerDelegate? = null
 
     private var url: String? = null
-    //private lateinit var sensorHelper: SensorHelper
 
     private lateinit var btnAudio: View
     private lateinit var btnSpeed: TextView
@@ -76,10 +91,6 @@ open class MExoPlayerActivity : AppCompatActivity() {
     private lateinit var positionView: TextView
     private lateinit var btnPlay: ImageView
     private lateinit var btnOrientation: View
-    private lateinit var layoutError: View
-    private lateinit var errorMessageView: TextView
-    private lateinit var btnReplay: Button
-    private lateinit var btnExit: Button
     private lateinit var progressWaiting: View
     private lateinit var mLockView: ImageView
 
@@ -113,7 +124,10 @@ open class MExoPlayerActivity : AppCompatActivity() {
 
     private val checkBufferRunnable: Runnable = Runnable {
         mExoPlayer?.run {
-            Timber.d("play.bufferedPercentage:${mExoPlayer!!.bufferedPercentage},playing:${mExoPlayer!!.isPlaying}")
+            Log.d(
+                TAG,
+                "play.bufferedPercentage:${mExoPlayer!!.bufferedPercentage},playing:${mExoPlayer!!.isPlaying}"
+            )
             if (mExoPlayer!!.bufferedPercentage < 30 && !mExoPlayer!!.isPlaying) {
                 showingBuffer = true
                 showBuffer()
@@ -162,10 +176,6 @@ open class MExoPlayerActivity : AppCompatActivity() {
         positionView = findViewById(R.id.position)
         btnPlay = findViewById(R.id.btn_play)
         btnOrientation = findViewById(R.id.btn_orientation)
-        layoutError = findViewById(R.id.layout_error)
-        errorMessageView = findViewById(R.id.error_message)
-        btnReplay = findViewById(R.id.btn_replay)
-        btnExit = findViewById(R.id.btn_exit)
         progressWaiting = findViewById(R.id.progress_waiting)
         mLockView = findViewById(R.id.tv_lock);
 
@@ -204,14 +214,6 @@ open class MExoPlayerActivity : AppCompatActivity() {
             }
 
         })
-
-        btnReplay.setOnClickListener {
-            layoutError.visibility = View.GONE
-            mExoPlayer?.let { player -> dispatchPlayPause(player) }
-        }
-        btnExit.setOnClickListener {
-            finish()
-        }
 
         updateProgressAction = Runnable { updateProgress() }
         updateVisibilityAction = Runnable { updateControls() }
@@ -256,7 +258,7 @@ open class MExoPlayerActivity : AppCompatActivity() {
                 }
                 tips.text = String.format(
                     resources.getString(R.string.player_tip_brightness),
-                    (100 * current).toInt()
+                    (100 * current)
                 )
             }
 
@@ -331,13 +333,15 @@ open class MExoPlayerActivity : AppCompatActivity() {
                 })
         }
 
-        processIntent(intent)
+        processIntent(savedInstanceState, intent)
     }
 
-    private fun processIntent(intent: Intent) {
-        url = IntentFile.processIntentAction(intent, this)
+    private fun processIntent(savedInstanceState: Bundle?, intent: Intent) {
+        val args = Args(intent)
+        val path = args.intent.extraPath
+        url = path?.toAbsolutePath().toString()
 
-        Timber.d("play.url:$url")
+        Log.d(TAG, "play.url:$url")
 
         initializePlayer()
     }
@@ -350,7 +354,7 @@ open class MExoPlayerActivity : AppCompatActivity() {
         val ori = requestedOrientation
         if (ori == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-        } else {
+        } else if (ori == ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE) {
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
     }
@@ -387,11 +391,11 @@ open class MExoPlayerActivity : AppCompatActivity() {
 
     private fun prepare() {
         //val haveStartPosition = startItemIndex != C.INDEX_UNSET
-        Timber.d("play.prepare.position:$startPosition")
+        Log.d(TAG, "play.prepare.position:$startPosition")
         if (startPosition > 0) {
             mExoPlayer!!.seekTo(startPosition)
         } else {
-            PlayerHelper.seekTo(mExoPlayer!!, url)
+            //PlayerHelper.seekTo(mExoPlayer!!, url)
         }
         mediaItem?.let { mExoPlayer!!.setMediaItem(it, startPosition <= 0) }
         showingBuffer = true
@@ -401,7 +405,7 @@ open class MExoPlayerActivity : AppCompatActivity() {
     }
 
     private fun setVideoName() {
-        videoName.text = url//MediaUtil.inferName(url.playerData.getVideoName())
+        videoName.text = inferName(url)
     }
 
     private val playerListener = object : Player.Listener {
@@ -425,13 +429,13 @@ open class MExoPlayerActivity : AppCompatActivity() {
         //暂停再开始也会调用这个
         override fun onRenderedFirstFrame() {
             super.onRenderedFirstFrame()
-            Timber.d("play.onRenderedFirstFrame")
+            Log.d(TAG, "play.onRenderedFirstFrame")
             updateTimeline()
         }
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
-            Timber.d("play.onIsPlayingChanged:$isPlaying")
+            Log.d(TAG, "play.onIsPlayingChanged:$isPlaying")
         }
 
         override fun onPlaybackStateChanged(playbackState: @Player.State Int) {
@@ -459,7 +463,7 @@ open class MExoPlayerActivity : AppCompatActivity() {
         }
 
         override fun onPlayerError(error: PlaybackException) {
-            Timber.d("play.error:${error.errorCode}")
+            Log.d(TAG, "play.error:${error.errorCode}")
             if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
                 mExoPlayer!!.seekToDefaultPosition()
                 mExoPlayer!!.prepare()
@@ -537,13 +541,8 @@ open class MExoPlayerActivity : AppCompatActivity() {
         handler.postDelayed(updateVisibilityAction, CONTROLS_SHOW_MS)
     }
 
-    private fun showError(errorTxt: String) {
-        errorMessageView.text = errorTxt
-        layoutError.visibility = View.VISIBLE
-    }
-
     private fun processPlayError(error: PlaybackException) {
-        Timber.d("play.error:${error.errorCode}")
+        Log.d(TAG, "play.error:${error.errorCode}")
     }
 
     private fun showToast(msgId: Int) {
@@ -612,7 +611,7 @@ open class MExoPlayerActivity : AppCompatActivity() {
         seekBar.keyProgressIncrement = duration / 1000
         durationView.text = Util.getStringForTime(formatBuilder, formatter, duration.toLong())
         updateProgress()
-        Timber.d("play.updateTimeline:${seekBar.max}")
+        Log.d(TAG, "play.updateTimeline:${seekBar.max}")
     }
 
     @OptIn(UnstableApi::class)
@@ -655,25 +654,16 @@ open class MExoPlayerActivity : AppCompatActivity() {
 
     private fun updateSeekIncrement() {
         val duration = mExoPlayer?.duration?.toInt() ?: 0
-        Timber.d("play.onKeyDown.updateSeekIncrement:$duration")
+        Log.d(TAG, "play.onKeyDown.updateSeekIncrement:$duration")
         if (duration > 0) {
             seekBar.keyProgressIncrement = duration / 100
-        }
-    }
-
-    private fun restoreSeekIncrement() {
-        handler.removeCallbacks(updateSeekAction)
-        val duration = mExoPlayer?.duration?.toInt() ?: 0
-        if (duration > 0) {
-            seekBar.keyProgressIncrement = duration / 1000
         }
     }
 
     //=================== play controller end ===================
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        Timber.d("play.onNewIntent:${intent.data}")
-        processIntent(intent)
+        Log.d(TAG, "play.onNewIntent:${intent.data}")
     }
 
     override fun onDestroy() {
@@ -733,7 +723,7 @@ open class MExoPlayerActivity : AppCompatActivity() {
         ) {
             val duration = mExoPlayer!!.duration / 1000
             val position = mExoPlayer!!.contentPosition / 1000
-            PlayerHelper.storeHistory(url, duration, position)
+            //PlayerHelper.storeHistory(url, duration, position)
         }
 
         if (VERSION.SDK_INT > 23) {
@@ -751,7 +741,7 @@ open class MExoPlayerActivity : AppCompatActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        videoPlayerDelegate?.updateScreenWidth(getScreenWidth())
+        videoPlayerDelegate?.updateScreenWidth(displayWidth)
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -777,6 +767,25 @@ open class MExoPlayerActivity : AppCompatActivity() {
         fun putExtras(intent: Intent, path: Path) {
             // All extra put here must be framework classes, or we may crash the resolver activity.
             intent.extraPath = path
+        }
+
+        /**
+         * 判断名字
+         *
+         * @param path
+         * @return
+         */
+        fun inferName(path: String?): String? {
+            if (TextUtils.isEmpty(path)) {
+                return ""
+            }
+            val start = path!!.lastIndexOf("/")
+            val end = path.lastIndexOf(".")
+            return if (start != -1 && end != -1) {
+                path.substring(start + 1, end)
+            } else {
+                null
+            }
         }
     }
 }

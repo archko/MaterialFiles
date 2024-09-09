@@ -3,6 +3,7 @@ package me.zhanghai.android.files.viewer.pdf.video
 import android.content.Context
 import android.net.Uri
 import android.text.TextUtils
+import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
@@ -19,9 +20,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
-import com.archko.editvideo.ui.activity.FfmpegRenderersFactory
+import me.zhanghai.android.files.viewer.video.FfmpegRenderersFactory
 import org.chromium.net.CronetEngine
-import timber.log.Timber
 import java.io.File
 import java.net.CookieHandler
 import java.net.CookieManager
@@ -46,11 +46,11 @@ class ExoSourceFactory {
 
         fun createMediaItem(context: Context, uri: Uri): MediaItem {
             val configurations = mutableListOf<MediaItem.SubtitleConfiguration>()
-            /*if (!subtitlePaths.isNullOrEmpty()) {
+            /*if (!subtitleLog.d(TAG, s.isNullOrEmpty()) {
                 var index = 1
-                for (subtitlePath in subtitlePaths) {
+                for (subtitleLog.d(TAG,  in subtitleLog.d(TAG, s) {
                     val configuration =
-                        createSubtitleCfg(context, subtitlePath, subtitleId.toString(), index)
+                        createSubtitleCfg(context, subtitleLog.d(TAG, , subtitleId.toString(), index)
                     if (null != configuration) {
                         subtitleId++
                         index++
@@ -71,7 +71,7 @@ class ExoSourceFactory {
             url: String?,
             context: Context
         ): MediaItem? {
-            Timber.d("播放地址:$url")
+            Log.d("TAG", "播放地址:$url")
             if (TextUtils.isEmpty(url)) {
                 return null
             }
@@ -84,17 +84,17 @@ class ExoSourceFactory {
 
         /*private fun createSubtitleCfg(
             context: Context,
-            subtitlePath: String?,
+            subtitleLog.d(TAG, : String?,
             id: String,
             index: Int
         ): MediaItem.SubtitleConfiguration? {
-            if (TextUtils.isEmpty(subtitlePath)) {
+            if (TextUtils.isEmpty(subtitleLog.d(TAG, )) {
                 return null
             }
-            Timber.d("createSubtitleCfg.id:$id, index:$index, path:$subtitlePath")
-            val mimeType: String? = MediaUtil.inferMimeType(subtitlePath)
+            Timber.d("createSubtitleCfg.id:$id, index:$index, Log.d(TAG, :$subtitleLog.d(TAG, ")
+            val mimeType: String? = MediaUtil.inferMimeType(subtitleLog.d(TAG, )
             return MediaItem.SubtitleConfiguration
-                .Builder(Uri.fromFile(File(subtitlePath!!)))
+                .Builder(Uri.fromFile(File(subtitleLog.d(TAG, !!)))
                 .setLabel(
                     String.format(
                         context.getString(R.string.player_track_select_subtitle),
@@ -185,7 +185,8 @@ class ExoSourceFactory {
         }
 
         fun buildPlayer(context: Context): ExoPlayer {
-            val builder = ExoPlayer.Builder(context,
+            val builder = ExoPlayer.Builder(
+                context,
                 FfmpegRenderersFactory(context)
             )
                 .setMediaSourceFactory(buildMediaSourceFactory(context))

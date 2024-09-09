@@ -1,4 +1,4 @@
-package me.zhanghai.android.files.viewer.pdf.video
+package me.zhanghai.android.files.viewer.video
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -14,6 +14,7 @@ import android.view.ViewConfiguration
 import android.view.Window
 import android.view.WindowManager
 import androidx.media3.exoplayer.ExoPlayer
+import me.zhanghai.android.files.util.displayWidth
 import kotlin.math.abs
 
 /**
@@ -62,7 +63,7 @@ class VideoPlayerDelegate(private var activity: Activity) : View.OnTouchListener
     }
 
     init {
-        halfScreenWidth = activity.getScreenWidth() / 2
+        halfScreenWidth = activity.displayWidth / 2
         touchSlop = ViewConfiguration.getTouchSlop() / 4
         if (touchSlop < 2) {
             touchSlop = 2
