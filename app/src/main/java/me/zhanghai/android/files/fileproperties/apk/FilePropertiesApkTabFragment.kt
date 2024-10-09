@@ -49,23 +49,19 @@ class FilePropertiesApkTabFragment : FilePropertiesTabFragment() {
                     packageInfo.longVersionCodeCompat
                 )
             )
-            val applicationInfo = packageInfo.applicationInfo
+            val applicationInfo = packageInfo.applicationInfo!!
             // PackageParser didn't return minSdkVersion before N, so it's hard to implement a
             // compat version.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                if (applicationInfo != null) {
-                    addItemView(
-                        R.string.file_properties_apk_min_sdk_version,
-                        getSdkVersionText(applicationInfo.minSdkVersion)
-                    )
-                }
-            }
-            if (applicationInfo != null) {
                 addItemView(
-                    R.string.file_properties_apk_target_sdk_version,
-                    getSdkVersionText(applicationInfo.targetSdkVersion)
+                    R.string.file_properties_apk_min_sdk_version,
+                    getSdkVersionText(applicationInfo.minSdkVersion)
                 )
             }
+            addItemView(
+                R.string.file_properties_apk_target_sdk_version,
+                getSdkVersionText(applicationInfo.targetSdkVersion)
+            )
             val requestedPermissionsSize = packageInfo.requestedPermissions?.size ?: 0
             addItemView(
                 R.string.file_properties_apk_requested_permissions,
@@ -80,11 +76,9 @@ class FilePropertiesApkTabFragment : FilePropertiesTabFragment() {
                     null
                 } else {
                     {
-                        packageInfo.requestedPermissions?.let { it1 ->
-                            PermissionListDialogFragment.show(
-                                it1, this@FilePropertiesApkTabFragment
-                            )
-                        }
+                        PermissionListDialogFragment.show(
+                            packageInfo.requestedPermissions!!, this@FilePropertiesApkTabFragment
+                        )
                     }
                 }
             )
