@@ -805,5 +805,5 @@
 
     <string name="player_tip_3speed" translatable="false">3 speed</string>
     <string name="player_tip_volume" translatable="false">Volume:%s</string>
-    <string name="player_tip_brightness" translatable="false">Brightness:%s</string>
+    <string name="player_tip_brightness" translatable="false">Brightness:%.0f</string>
 </resources>

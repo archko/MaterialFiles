@@ -294,6 +294,9 @@ class VideoPlayerDelegate(private var activity: Activity) : View.OnTouchListener
     }
 
     private fun updateVolume(yChanged: Float) {
+        if (yChanged == 0.0f) {
+            return
+        }
         val last = getSystemVolume()
         if (yChanged > 0) {
             volumeUp()
@@ -306,7 +309,10 @@ class VideoPlayerDelegate(private var activity: Activity) : View.OnTouchListener
     }
 
     private fun updateBrightness(yChanged: Float) {
-        //Log.d(TAG, "View updateBrightness:$action, xChanged:$xChanged, yChanged:$yChanged")
+        if (yChanged == 0.0f) {
+            return
+        }
+        //Log.d(TAG, "View updateBrightness:$brightness, yChanged:$yChanged")
         val currentBright = brightness
         var target = if (yChanged > 0) {
             currentBright + 0.01
