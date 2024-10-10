@@ -20,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.doOnPreDraw
 import androidx.fragment.app.Fragment
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
+import androidx.viewpager2.widget.ViewPager2
 import dev.chrisbanes.insetter.applySystemWindowInsetsToPadding
 import java8.nio.file.Path
 import kotlinx.parcelize.Parcelize
@@ -110,6 +111,7 @@ class PdfViewerFragment : Fragment(), ConfirmDeleteDialogFragment.Listener {
             // 1 is the default for the old androidx.viewpager.widget.ViewPager.
             offscreenPageLimit = 1
             adapter = this@PdfViewerFragment.adapter
+            orientation = ViewPager2.ORIENTATION_VERTICAL
         }
         val descriptor =
             ParcelFileDescriptor.open(path.toFile(), ParcelFileDescriptor.MODE_READ_ONLY)
