@@ -6,10 +6,13 @@
 package me.zhanghai.android.files.viewer.pdf
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.Rect
 import android.graphics.pdf.PdfRenderer
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -26,6 +29,7 @@ import me.zhanghai.android.files.util.ParcelableArgs
 import me.zhanghai.android.files.util.ParcelableParceler
 import me.zhanghai.android.files.util.ParcelableState
 import me.zhanghai.android.files.util.args
+import me.zhanghai.android.files.util.dpToDimensionPixelSize
 import me.zhanghai.android.files.util.extraPath
 import me.zhanghai.android.files.util.finish
 import me.zhanghai.android.files.util.getState
@@ -124,6 +128,27 @@ class PdfViewerFragment : Fragment() {
 
     private fun updateTitle() {
         requireActivity().title = path.fileName.toString()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val defaultWidth = dpToDimensionPixelSize(newConfig.screenWidthDp.toFloat())
+        val defaultHeight = dpToDimensionPixelSize(newConfig.screenHeightDp.toFloat())
+        Log.d("onConfigurationChanged","width:$defaultWidth, $defaultHeight")
+        adapter.updateSize(defaultWidth, defaultHeight)
+        val lm = (binding.recyclerView.layoutManager as LinearLayoutManager)
+        var offset = 0
+        val first = lm.findFirstVisibleItemPosition()
+        if (first > 0) {
+            val child = lm.findViewByPosition(first)
+            child?.run {
+                val r = Rect()
+                child.getLocalVisibleRect(r)
+                offset = r.top
+            }
+        }
+        lm.scrollToPositionWithOffset(first, -offset)
+        adapter.notifyDataSetChanged()
     }
 
     @Parcelize

@@ -10,7 +10,6 @@ import android.graphics.pdf.PdfRenderer
 import android.os.AsyncTask
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.util.Size
 import android.view.View
 import android.view.ViewGroup
@@ -37,6 +36,11 @@ class PdfViewerAdapter(
     init {
         width = (lifecycleOwner as PdfViewerFragment).requireContext().displayWidth
         height = lifecycleOwner.requireContext().displayHeight
+    }
+
+    fun updateSize(w: Int, h: Int) {
+        width = w
+        height = h
     }
 
     override fun getItemCount(): Int {
@@ -120,15 +124,9 @@ class PdfViewerAdapter(
 
     private fun getSize(pW: Int, pH: Int): Size {
         val xscale = 1f * width / pW
-        val yscale = 1f * height / pH
-        var w: Int = width
-        var h: Int = height
-        if (xscale < yscale) {
-            h = (pH * xscale).toInt()
-        } else {
-            w = (pW * yscale).toInt()
-        }
-        //Log.d("create", "width:${width}-${height}, result:$w-$h, scale:$xscale-$yscale")
+        val w: Int = width
+        val h: Int = (pH * xscale).toInt()
+        //Log.d("create", "width:${width}-${height}, result:$w-$h, page;$pW, $pH, scale:$xscale")
         return Size(w, h)
     }
 
