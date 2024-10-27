@@ -32,7 +32,7 @@ class BreadcrumbLayout : HorizontalScrollView {
         ColorStateList(
             arrayOf(intArrayOf(android.R.attr.state_activated), intArrayOf()),
             intArrayOf(
-                context.getColorByAttr(android.R.attr.textColorPrimary),
+                context.resources.getColor(R.color.color_primary),
                 context.getColorByAttr(android.R.attr.textColorSecondary)
             )
         )

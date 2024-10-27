@@ -11,9 +11,6 @@ import android.graphics.pdf.PdfRenderer
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
 import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuInflater
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
@@ -25,23 +22,18 @@ import dev.chrisbanes.insetter.applySystemWindowInsetsToPadding
 import java8.nio.file.Path
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.WriteWith
-import me.zhanghai.android.files.R
 import me.zhanghai.android.files.databinding.ImageViewerFragmentBinding
-import me.zhanghai.android.files.file.fileProviderUri
 import me.zhanghai.android.files.provider.common.delete
 import me.zhanghai.android.files.util.ParcelableArgs
 import me.zhanghai.android.files.util.ParcelableParceler
 import me.zhanghai.android.files.util.ParcelableState
 import me.zhanghai.android.files.util.args
-import me.zhanghai.android.files.util.createSendImageIntent
 import me.zhanghai.android.files.util.extraPath
 import me.zhanghai.android.files.util.finish
 import me.zhanghai.android.files.util.getState
 import me.zhanghai.android.files.util.mediumAnimTime
 import me.zhanghai.android.files.util.putState
 import me.zhanghai.android.files.util.showToast
-import me.zhanghai.android.files.util.startActivitySafe
-import me.zhanghai.android.files.util.withChooser
 import me.zhanghai.android.files.viewer.image.ConfirmDeleteDialogFragment
 import me.zhanghai.android.systemuihelper.SystemUiHelper
 import java.io.IOException
@@ -62,8 +54,6 @@ class PdfViewerFragment : Fragment(), ConfirmDeleteDialogFragment.Listener {
         super.onCreate(savedInstanceState)
 
         path = (savedInstanceState?.getState<State>()?.path ?: argsPath)!!
-
-        setHasOptionsMenu(true)
     }
 
     override fun onCreateView(
@@ -137,57 +127,11 @@ class PdfViewerFragment : Fragment(), ConfirmDeleteDialogFragment.Listener {
         outState.putState(State(path))
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        super.onCreateOptionsMenu(menu, inflater)
-
-        //inflater.inflate(R.menu.image_viewer, menu)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean =
-        when (item.itemId) {
-            R.id.action_delete -> {
-                confirmDelete()
-                true
-            }
-
-            R.id.action_share -> {
-                share()
-                true
-            }
-
-            else -> super.onOptionsItemSelected(item)
-        }
-
-    private fun confirmDelete() {
-        ConfirmDeleteDialogFragment.show(path, this)
-    }
-
     override fun delete(path: Path) {
-        try {
-            path.delete()
-        } catch (e: IOException) {
-            e.printStackTrace()
-            showToast(e.toString())
-            return
-        }
-        if (null == path) {
-            finish()
-            return
-        }
-
-        updateTitle()
-        binding.viewPager.doOnPreDraw { binding.viewPager.requestTransform() }
     }
 
     private fun updateTitle() {
         requireActivity().title = path.fileName.toString()
-    }
-
-    private fun share() {
-        val intent = path.fileProviderUri.createSendImageIntent()
-            .apply { extraPath = path }
-            .withChooser()
-        startActivitySafe(intent)
     }
 
     @Parcelize
