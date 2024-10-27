@@ -7,16 +7,15 @@ package me.zhanghai.android.files.viewer.pdf
 
 import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
+import android.os.AsyncTask
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import coil.dispose
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import me.zhanghai.android.files.databinding.PdfViewerItemBinding
 import me.zhanghai.android.files.util.displayHeight
 import me.zhanghai.android.files.util.displayWidth
@@ -27,6 +26,7 @@ class PdfViewerAdapter(
     private val listener: (View) -> Unit
 ) : RecyclerView.Adapter<PdfViewerAdapter.ViewHolder>() {
     private var pdfRenderer: PdfRenderer? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
     private var width = 1080
     private var height = 1920
 
@@ -61,27 +61,30 @@ class PdfViewerAdapter(
     }
 
     private fun loadImage(binding: PdfViewerItemBinding, position: Int) {
-        lifecycleOwner.lifecycleScope.launch {
-            val imageInfo = try {
-                withContext(Dispatchers.IO) {
-                    renderPdfPage(
-                        pdfRenderer!!.openPage(position),
-                        width,
-                        height
-                    )
-                }
+        binding.image.tag = position
+        AsyncTask.SERIAL_EXECUTOR.execute {
+            val imageInfo: Bitmap = try {
+                renderPdfPage(
+                    pdfRenderer!!.openPage(position),
+                    width,
+                    height
+                )
             } catch (e: Exception) {
                 e.printStackTrace()
                 showError(binding, e)
-                return@launch
+                return@execute
             }
-            loadImageWithInfo(binding, imageInfo)
+            mainHandler.post {
+                if (binding.image.tag == position) {
+                    loadImageWithInfo(binding, imageInfo)
+                }
+            }
         }
     }
 
     private fun loadImageWithInfo(
         binding: PdfViewerItemBinding,
-        bitmap: Bitmap
+        bitmap: Bitmap?
     ) {
         binding.image.setImageBitmap(bitmap)
     }
