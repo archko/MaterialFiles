@@ -10,11 +10,14 @@ import android.graphics.pdf.PdfRenderer
 import android.os.AsyncTask
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
+import android.util.Size
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.isVisible
+import androidx.collection.arrayMapOf
 import androidx.lifecycle.LifecycleOwner
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.LayoutParams
 import coil.dispose
 import me.zhanghai.android.files.databinding.PdfViewerItemBinding
 import me.zhanghai.android.files.util.displayHeight
@@ -29,6 +32,7 @@ class PdfViewerAdapter(
     private val mainHandler = Handler(Looper.getMainLooper())
     private var width = 1080
     private var height = 1920
+    private var sizeMap = arrayMapOf<Int, Size>()
 
     init {
         width = (lifecycleOwner as PdfViewerFragment).requireContext().displayWidth
@@ -50,7 +54,19 @@ class PdfViewerAdapter(
 
     fun setPdfRender(pdfRenderer: PdfRenderer) {
         this.pdfRenderer = pdfRenderer
-        notifyDataSetChanged()
+        AsyncTask.SERIAL_EXECUTOR.execute {
+            val pc = pdfRenderer.pageCount
+            /*for (i in 0 until pc) {
+                val page = pdfRenderer.openPage(i)
+                sizeMap[i] = Size(page.width, page.height)
+            }*/
+            val page = pdfRenderer.openPage(0)
+            sizeMap[0] = Size(page.width, page.height)
+            page.close()
+            mainHandler.post {
+                notifyDataSetChanged()
+            }
+        }
     }
 
     override fun onViewRecycled(holder: ViewHolder) {
@@ -62,6 +78,7 @@ class PdfViewerAdapter(
 
     private fun loadImage(binding: PdfViewerItemBinding, position: Int) {
         binding.image.tag = position
+        binding.image.setImageBitmap(null)
         AsyncTask.SERIAL_EXECUTOR.execute {
             val imageInfo: Bitmap = try {
                 renderPdfPage(
@@ -86,21 +103,40 @@ class PdfViewerAdapter(
         binding: PdfViewerItemBinding,
         bitmap: Bitmap?
     ) {
-        binding.image.setImageBitmap(bitmap)
+        bitmap?.let {
+            val w = bitmap.width
+            val h = bitmap.height
+            //Log.d("result", "width:$w-$h")
+            binding.image.setImageBitmap(bitmap)
+            var lp = binding.image.layoutParams
+            if (lp == null) {
+                lp = LayoutParams(w, h)
+            }
+            lp.width = w
+            lp.height = h
+            binding.image.layoutParams = lp
+        }
+    }
+
+    private fun getSize(pW: Int, pH: Int): Size {
+        val xscale = 1f * width / pW
+        val yscale = 1f * height / pH
+        var w: Int = width
+        var h: Int = height
+        if (xscale < yscale) {
+            h = (pH * xscale).toInt()
+        } else {
+            w = (pW * yscale).toInt()
+        }
+        //Log.d("create", "width:${width}-${height}, result:$w-$h, scale:$xscale-$yscale")
+        return Size(w, h)
     }
 
     private fun renderPdfPage(page: PdfRenderer.Page, width: Int, height: Int): Bitmap {
-        val xscale = 1f * width / page.width
-        val yscale = 1f * height / page.height
-        var w: Int = width
-        var h: Int = height
-        if (xscale > yscale) {
-            h = (page.height * xscale).toInt()
-        } else {
-            w = (page.width * yscale).toInt()
-        }
+        val size = getSize(page.width, page.height)
 
-        val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        //Log.d("render", "${page.index} width:${size.width}-${size.height}, page:${page.width}-${page.height}")
+        val bitmap = Bitmap.createBitmap(size.width, size.height, Bitmap.Config.ARGB_8888)
         page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
         page.close()
         return bitmap
@@ -109,9 +145,24 @@ class PdfViewerAdapter(
     private fun showError(binding: PdfViewerItemBinding, throwable: Throwable) {
     }
 
-    class ViewHolder(val binding: PdfViewerItemBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class ViewHolder(val binding: PdfViewerItemBinding) :
+        RecyclerView.ViewHolder(binding.root) {
         init {
-            binding.image.isVisible = true
+            if (sizeMap.size > 0) {
+                val p0size = sizeMap[0]
+                val pw = p0size!!.width
+                val ph = p0size.height
+                val size = getSize(pw, ph)
+
+                //Log.d("create", "width:${size.width}-${size.height}, page:$pw-$ph")
+                var lp = binding.image.layoutParams
+                if (lp == null) {
+                    lp = LayoutParams(size.width, size.height)
+                }
+                lp.width = size.width
+                lp.height = size.height
+                binding.image.layoutParams = lp
+            }
         }
     }
 }
