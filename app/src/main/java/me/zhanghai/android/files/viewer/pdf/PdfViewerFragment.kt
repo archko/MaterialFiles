@@ -14,16 +14,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.doOnPreDraw
 import androidx.fragment.app.Fragment
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
-import androidx.viewpager2.widget.ViewPager2
+import androidx.recyclerview.widget.LinearLayoutManager
 import dev.chrisbanes.insetter.applySystemWindowInsetsToPadding
 import java8.nio.file.Path
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.WriteWith
 import me.zhanghai.android.files.databinding.ImageViewerFragmentBinding
-import me.zhanghai.android.files.provider.common.delete
 import me.zhanghai.android.files.util.ParcelableArgs
 import me.zhanghai.android.files.util.ParcelableParceler
 import me.zhanghai.android.files.util.ParcelableState
@@ -33,12 +31,9 @@ import me.zhanghai.android.files.util.finish
 import me.zhanghai.android.files.util.getState
 import me.zhanghai.android.files.util.mediumAnimTime
 import me.zhanghai.android.files.util.putState
-import me.zhanghai.android.files.util.showToast
-import me.zhanghai.android.files.viewer.image.ConfirmDeleteDialogFragment
 import me.zhanghai.android.systemuihelper.SystemUiHelper
-import java.io.IOException
 
-class PdfViewerFragment : Fragment(), ConfirmDeleteDialogFragment.Listener {
+class PdfViewerFragment : Fragment() {
     private val args by args<Args>()
     private val argsPath by lazy { args.intent.extraPath }
 
@@ -91,17 +86,17 @@ class PdfViewerFragment : Fragment(), ConfirmDeleteDialogFragment.Listener {
         }
         // This will set up window flags.
         systemUiHelper.show()
-        binding.viewPager.apply {
+        binding.recyclerView.apply {
             setBackgroundColor(Color.WHITE)
+            visibility = View.VISIBLE
         }
 
         adapter = PdfViewerAdapter(this) { systemUiHelper.toggle() }.apply {
         }
-        binding.viewPager.apply {
+        binding.recyclerView.apply {
             // 1 is the default for the old androidx.viewpager.widget.ViewPager.
-            offscreenPageLimit = 1
             adapter = this@PdfViewerFragment.adapter
-            orientation = ViewPager2.ORIENTATION_VERTICAL
+            layoutManager = LinearLayoutManager(requireContext())
         }
         val descriptor =
             ParcelFileDescriptor.open(path.toFile(), ParcelFileDescriptor.MODE_READ_ONLY)
@@ -125,9 +120,6 @@ class PdfViewerFragment : Fragment(), ConfirmDeleteDialogFragment.Listener {
         super.onSaveInstanceState(outState)
 
         outState.putState(State(path))
-    }
-
-    override fun delete(path: Path) {
     }
 
     private fun updateTitle() {

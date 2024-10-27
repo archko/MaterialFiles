@@ -14,34 +14,37 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import coil.dispose
-import coil.load
-import coil.size.Size
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import me.zhanghai.android.files.coil.fadeIn
-import me.zhanghai.android.files.databinding.ImageViewerItemBinding
-import me.zhanghai.android.files.util.fadeInUnsafe
-import me.zhanghai.android.files.util.fadeOutUnsafe
+import me.zhanghai.android.files.databinding.PdfViewerItemBinding
+import me.zhanghai.android.files.util.displayHeight
+import me.zhanghai.android.files.util.displayWidth
 import me.zhanghai.android.files.util.layoutInflater
-import me.zhanghai.android.files.util.shortAnimTime
 
 class PdfViewerAdapter(
     private val lifecycleOwner: LifecycleOwner,
     private val listener: (View) -> Unit
 ) : RecyclerView.Adapter<PdfViewerAdapter.ViewHolder>() {
     private var pdfRenderer: PdfRenderer? = null
+    private var width = 1080
+    private var height = 1920
+
+    init {
+        width = (lifecycleOwner as PdfViewerFragment).requireContext().displayWidth
+        height = lifecycleOwner.requireContext().displayHeight
+    }
 
     override fun getItemCount(): Int {
         return pdfRenderer?.pageCount ?: 0
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder =
-        ViewHolder(ImageViewerItemBinding.inflate(parent.context.layoutInflater, parent, false))
+        ViewHolder(PdfViewerItemBinding.inflate(parent.context.layoutInflater, parent, false))
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val binding = holder.binding
-        binding.image.setOnPhotoTapListener { view, _, _ -> listener(view) }
+        binding.image.setOnClickListener { view -> listener(view) }
         loadImage(binding, position)
     }
 
@@ -57,15 +60,14 @@ class PdfViewerAdapter(
         binding.image.dispose()
     }
 
-    private fun loadImage(binding: ImageViewerItemBinding, position: Int) {
-
+    private fun loadImage(binding: PdfViewerItemBinding, position: Int) {
         lifecycleOwner.lifecycleScope.launch {
             val imageInfo = try {
                 withContext(Dispatchers.IO) {
                     renderPdfPage(
                         pdfRenderer!!.openPage(position),
-                        1080,
-                        1920
+                        width,
+                        height
                     )
                 }
             } catch (e: Exception) {
@@ -78,10 +80,10 @@ class PdfViewerAdapter(
     }
 
     private fun loadImageWithInfo(
-        binding: ImageViewerItemBinding,
-        imageInfo: Bitmap
+        binding: PdfViewerItemBinding,
+        bitmap: Bitmap
     ) {
-        binding.image.setImageBitmap(imageInfo)
+        binding.image.setImageBitmap(bitmap)
     }
 
     private fun renderPdfPage(page: PdfRenderer.Page, width: Int, height: Int): Bitmap {
@@ -101,15 +103,10 @@ class PdfViewerAdapter(
         return bitmap
     }
 
-    private fun showError(binding: ImageViewerItemBinding, throwable: Throwable) {
-        binding.progress.fadeOutUnsafe()
-        binding.errorText.text = throwable.toString()
-        binding.errorText.fadeInUnsafe(true)
-        binding.image.isVisible = false
-        binding.largeImage.isVisible = false
+    private fun showError(binding: PdfViewerItemBinding, throwable: Throwable) {
     }
 
-    class ViewHolder(val binding: ImageViewerItemBinding) : RecyclerView.ViewHolder(binding.root) {
+    class ViewHolder(val binding: PdfViewerItemBinding) : RecyclerView.ViewHolder(binding.root) {
         init {
             binding.image.isVisible = true
         }
