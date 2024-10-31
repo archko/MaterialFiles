@@ -100,7 +100,7 @@ class PdfViewerFragment : Fragment() {
         binding.recyclerView.apply {
             // 1 is the default for the old androidx.viewpager.widget.ViewPager.
             adapter = this@PdfViewerFragment.adapter
-            //layoutManager = LinearLayoutManager(requireContext())
+            layoutManager = LinearLayoutManager(requireContext())
         }
         val descriptor =
             ParcelFileDescriptor.open(path.toFile(), ParcelFileDescriptor.MODE_READ_ONLY)
