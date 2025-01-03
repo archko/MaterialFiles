@@ -128,7 +128,7 @@ dependencies {
     implementation('com.github.bitfireAT:dav4jvm:c1bc143') {
         exclude group: 'org.ogce', module: 'xpp3'
     }
-    implementation 'com.github.chrisbanes:PhotoView:2.3.0'
+    //implementation 'com.github.chrisbanes:PhotoView:2.3.0'
     implementation 'com.github.topjohnwu.libsu:service:5.2.2'
 }
 
@@ -203,7 +203,7 @@ dependencies {
     }
     implementation platform('io.coil-kt:coil-bom:2.7.0')
     implementation 'io.coil-kt:coil'
-    implementation 'io.coil-kt:coil-gif'
+    //implementation 'io.coil-kt:coil-gif'
     implementation 'io.coil-kt:coil-svg'
     implementation 'io.coil-kt:coil-video'
     implementation 'me.zhanghai.android.appiconloader:appiconloader:1.5.0'

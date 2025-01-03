@@ -54,7 +54,7 @@ class ImageViewerAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val path = getItem(position)
         val binding = holder.binding
-        binding.image.setOnPhotoTapListener { view, _, _ -> listener(view) }
+        //binding.image.setOnPhotoTapListener { view, _, _ -> listener(view) }
         binding.largeImage.setOnClickListener(listener)
         loadImage(binding, path)
     }
@@ -146,7 +146,7 @@ class ImageViewerAdapter(
                 return false
             }
             // 4 bytes per pixel for ARGB_8888.
-            if (width * height * 4 > MAX_BITMAP_SIZE) {
+            /*if (width * height * 4 > MAX_BITMAP_SIZE) {
                 return true
             }
             if (width > 2048 || height > 2048) {
@@ -155,7 +155,8 @@ class ImageViewerAdapter(
                     return true
                 }
             }
-            return false
+            return false*/
+            return true
         }
 
     private val SubsamplingScaleImageView.cropScale: Float
