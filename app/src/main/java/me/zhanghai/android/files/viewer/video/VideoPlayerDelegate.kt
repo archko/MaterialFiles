@@ -63,7 +63,7 @@ class VideoPlayerDelegate(private var activity: Activity) : View.OnTouchListener
 
     init {
         halfScreenWidth = activity.displayWidth / 2
-        touchSlop = ViewConfiguration.getTouchSlop() / 4
+        touchSlop = ViewConfiguration.getTouchSlop() / 2
         if (touchSlop < 2) {
             touchSlop = 2
         }
@@ -324,9 +324,11 @@ class VideoPlayerDelegate(private var activity: Activity) : View.OnTouchListener
                 if (firstScroll) {
                     // 以触摸屏幕后第一次滑动为标准，避免在屏幕上操作切换混乱,第一次会比较大,忽略它
                     // 横向的距离变化大则调整进度，纵向的变化大则调整音量
-                    if (abs(distanceX.toDouble()) >= abs(distanceY.toDouble())) {
+                    if (Math.abs(distanceX) > touchSlop
+                        && abs(distanceX.toDouble()) >= abs(distanceY.toDouble())
+                    ) {
                         touchAction = TOUCH_MOVE_HORIZONTAL
-                    } else {
+                    } else if (Math.abs(distanceY) > touchSlop) {
                         if (mOldX > halfScreenWidth) { // 音量
                             touchAction = TOUCH_MOVE_VERTICAL_RIGHT
                         } else if (mOldX < halfScreenWidth) { // 亮度
@@ -335,7 +337,7 @@ class VideoPlayerDelegate(private var activity: Activity) : View.OnTouchListener
                     }
                 }
 
-                // 如果每次触摸屏幕后第一次scroll是调节进度，那之后的scroll事件都处理音量进度，直到离开屏幕执行下一次操作
+                // 如果每次触摸屏幕后第一次scroll是调节进度，那之后的scroll事件都处理进度，直到离开屏幕执行下一次操作
                 if (touchAction == TOUCH_MOVE_HORIZONTAL) {
                     if (abs(distanceX.toDouble()) > abs(distanceY.toDouble())) { // 横向移动大于纵向移动
                         seek(-distanceX)
