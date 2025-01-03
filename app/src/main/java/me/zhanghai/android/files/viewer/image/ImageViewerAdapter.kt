@@ -5,7 +5,6 @@
 
 package me.zhanghai.android.files.viewer.image
 
-import android.graphics.BitmapFactory
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
@@ -13,30 +12,27 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import coil.dispose
-import coil.load
-import coil.size.Size
 import com.davemorrissey.labs.subscaleview.ImageSource
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.DefaultOnImageEventListener
+import com.github.penfeizhou.animation.gif.GifDrawable
+import com.github.penfeizhou.animation.loader.FileLoader
+import com.github.penfeizhou.animation.webp.WebPDrawable
 import java8.nio.file.Path
 import java8.nio.file.attribute.BasicFileAttributes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import me.zhanghai.android.files.coil.fadeIn
 import me.zhanghai.android.files.databinding.ImageViewerItemBinding
 import me.zhanghai.android.files.file.MimeType
 import me.zhanghai.android.files.file.asMimeType
-import me.zhanghai.android.files.file.asMimeTypeOrNull
 import me.zhanghai.android.files.file.fileProviderUri
 import me.zhanghai.android.files.provider.common.AndroidFileTypeDetector
-import me.zhanghai.android.files.provider.common.newInputStream
 import me.zhanghai.android.files.provider.common.readAttributes
 import me.zhanghai.android.files.ui.SimpleAdapter
 import me.zhanghai.android.files.util.fadeInUnsafe
 import me.zhanghai.android.files.util.fadeOutUnsafe
 import me.zhanghai.android.files.util.layoutInflater
-import me.zhanghai.android.files.util.shortAnimTime
 import kotlin.math.max
 
 class ImageViewerAdapter(
@@ -64,6 +60,13 @@ class ImageViewerAdapter(
 
         val binding = holder.binding
         binding.image.dispose()
+        binding.image.drawable?.run {
+            if (this is GifDrawable) {
+                this.stop()
+            } else if (this is WebPDrawable) {
+                this.stop()
+            }
+        }
         binding.largeImage.recycle()
     }
 
@@ -87,11 +90,14 @@ class ImageViewerAdapter(
     private fun Path.loadImageInfo(): ImageInfo {
         val attributes = readAttributes(BasicFileAttributes::class.java)
         val mimeType = AndroidFileTypeDetector.getMimeType(this, attributes).asMimeType()
-        val bitmapOptions = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        newInputStream().use { BitmapFactory.decodeStream(it, null, bitmapOptions) }
+        //val bitmapOptions = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        //newInputStream().use { BitmapFactory.decodeStream(it, null, bitmapOptions) }
+        //return ImageInfo(
+        //    attributes, bitmapOptions.outWidth, bitmapOptions.outHeight,
+        //    bitmapOptions.outMimeType?.asMimeTypeOrNull() ?: mimeType
+        //)
         return ImageInfo(
-            attributes, bitmapOptions.outWidth, bitmapOptions.outHeight,
-            bitmapOptions.outMimeType?.asMimeTypeOrNull() ?: mimeType
+            attributes, 0, 0, mimeType
         )
     }
 
@@ -101,15 +107,27 @@ class ImageViewerAdapter(
         imageInfo: ImageInfo
     ) {
         if (!imageInfo.shouldUseLargeImageView) {
-            binding.image.apply {
-                isVisible = true
-                load(path to imageInfo.attributes) {
-                    size(Size.ORIGINAL)
-                    fadeIn(context.shortAnimTime)
-                    listener(
-                        onSuccess = { _, _ -> binding.progress.fadeOutUnsafe() },
-                        onError = { _, result -> showError(binding, result.throwable) }
-                    )
+            if (imageInfo.mimeType == MimeType.IMAGE_GIF) {
+                binding.image.apply {
+                    isVisible = true
+                    val fileLoader = FileLoader(path.toString())
+                    val drawable = GifDrawable(fileLoader)
+                    setImageDrawable(drawable)
+                    /*load(path to imageInfo.attributes) {
+                        size(Size.ORIGINAL)
+                        fadeIn(context.shortAnimTime)
+                        listener(
+                            onSuccess = { _, _ -> binding.progress.fadeOutUnsafe() },
+                            onError = { _, result -> showError(binding, result.throwable) }
+                        )
+                    }*/
+                }
+            } else if (imageInfo.mimeType == MimeType.IMAGE_WEBP) {
+                binding.image.apply {
+                    isVisible = true
+                    val fileLoader = FileLoader(path.toString())
+                    val drawable = WebPDrawable(fileLoader)
+                    setImageDrawable(drawable)
                 }
             }
         } else {
@@ -139,14 +157,14 @@ class ImageViewerAdapter(
     private val ImageInfo.shouldUseLargeImageView: Boolean
         get() {
             // See BitmapFactory.cpp encodedFormatToString()
-            if (mimeType == MimeType.IMAGE_GIF) {
+            if (mimeType == MimeType.IMAGE_GIF || mimeType == MimeType.IMAGE_WEBP) {
                 return false
             }
-            if (width <= 0 || height <= 0) {
+            /*if (width <= 0 || height <= 0) {
                 return false
             }
             // 4 bytes per pixel for ARGB_8888.
-            /*if (width * height * 4 > MAX_BITMAP_SIZE) {
+            if (width * height * 4 > MAX_BITMAP_SIZE) {
                 return true
             }
             if (width > 2048 || height > 2048) {
@@ -165,7 +183,7 @@ class ImageViewerAdapter(
             val viewHeight = (height - paddingTop - paddingBottom)
             val orientation = appliedOrientation
             val rotated90Or270 = orientation == SubsamplingScaleImageView.ORIENTATION_90
-                || orientation == SubsamplingScaleImageView.ORIENTATION_270
+                    || orientation == SubsamplingScaleImageView.ORIENTATION_270
             val imageWidth = if (rotated90Or270) sHeight else sWidth
             val imageHeight = if (rotated90Or270) sWidth else sHeight
             return max(viewWidth.toFloat() / imageWidth, viewHeight.toFloat() / imageHeight)

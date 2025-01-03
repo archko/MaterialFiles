@@ -236,6 +236,10 @@ dependencies {
     // https://mvnrepository.com/artifact/org.jellyfin.media3/media3-ffmpeg-decoder
     implementation("org.jellyfin.media3:media3-ffmpeg-decoder:1.5.0+1")
 
+    def apng_version="3.0.1"
+    api "com.github.penfeizhou.android.animation:awebp:$apng_version"
+    api "com.github.penfeizhou.android.animation:gif:$apng_version"
+
 //#ifdef NONFREE
     //implementation platform('com.google.firebase:firebase-bom:33.5.1')
     //implementation 'com.google.firebase:firebase-analytics'
