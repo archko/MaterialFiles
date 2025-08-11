@@ -5,21 +5,20 @@
 
 package me.zhanghai.android.files.coil
 
+import android.graphics.Bitmap
 import android.graphics.Paint
 import android.media.MediaMetadataRetriever
 import android.os.Build
 import androidx.core.graphics.applyCanvas
 import androidx.core.graphics.createBitmap
-import androidx.core.graphics.drawable.toDrawable
-import coil.ImageLoader
-import coil.decode.DataSource
-import coil.decode.DecodeUtils
-import coil.fetch.DrawableResult
-import coil.fetch.FetchResult
-import coil.fetch.Fetcher
-import coil.request.Options
-import coil.request.videoFrameOption
-import coil.request.videoFramePercent
+import coil3.ImageLoader
+import coil3.asImage
+import coil3.decode.DataSource
+import coil3.decode.DecodeUtils
+import coil3.fetch.FetchResult
+import coil3.fetch.Fetcher
+import coil3.fetch.ImageFetchResult
+import coil3.request.Options
 import me.zhanghai.android.files.compat.getFrameAtTimeCompat
 import me.zhanghai.android.files.compat.getScaledFrameAtTimeCompat
 import me.zhanghai.android.files.compat.use
@@ -62,14 +61,13 @@ class VideoFrameFetcher(
                     ?.toLongOrNull() ?: 0L
             // 1/3 is the first percentage tried by totem-video-thumbnailer.
             // @see https://gitlab.gnome.org/GNOME/totem/-/blob/master/src/totem-video-thumbnailer.c#L543
-            val framePercent = options.parameters.videoFramePercent() ?: (1.0 / 3.0)
+            val framePercent = (1.0 / 3.0)
             val frameMicros = TimeUnit.MICROSECONDS.convert(
                 (framePercent * durationMillis).roundToLong(), TimeUnit.MILLISECONDS
             )
-            val frameOption = options.parameters.videoFrameOption()
-                ?: MediaMetadataRetriever.OPTION_CLOSEST_SYNC
+            val frameOption = MediaMetadataRetriever.OPTION_CLOSEST_SYNC
             val bitmapParams = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                MediaMetadataRetriever.BitmapParams().apply { preferredConfig = options.config }
+                MediaMetadataRetriever.BitmapParams().apply { preferredConfig = Bitmap.Config.ARGB_8888 }
             } else {
                 null
             }
@@ -84,11 +82,7 @@ class VideoFrameFetcher(
                     dstHeight = dstHeight,
                     scale = options.scale
                 )
-                val scale = if (options.allowInexactSize) {
-                    rawScale.coerceAtMost(1.0)
-                } else {
-                    rawScale
-                }
+                val scale = rawScale
                 val width = (scale * srcWidth).roundToInt()
                 val height = (scale * srcHeight).roundToInt()
                 retriever.getScaledFrameAtTimeCompat(
@@ -110,23 +104,16 @@ class VideoFrameFetcher(
                 scale = options.scale
             )
             checkNotNull(outBitmap) { "Failed to decode frame at $frameMicros microseconds" }
-            val scale = if (options.allowInexactSize) {
-                rawScale.coerceAtMost(1.0)
-            } else {
-                rawScale
-            }
+            val scale = rawScale
             val width = (scale * srcWidth).roundToInt()
             val height = (scale * srcHeight).roundToInt()
-            val isValidSize = if (options.allowInexactSize) {
-                outBitmap.width <= width && outBitmap.height <= height
-            } else {
-                outBitmap.width == width && outBitmap.height == height
-            }
-            val isValidConfig = outBitmap.config?.isHardware != true || options.config.isHardware
+            val isValidSize = outBitmap.width == width && outBitmap.height == height
+
+            val isValidConfig = outBitmap.config?.isHardware != true
             val bitmap = if (isValidSize && isValidConfig) {
                 outBitmap
             } else {
-                val config = options.config.toSoftware()
+                val config = Bitmap.Config.ARGB_8888
                 createBitmap(width, height, config).applyCanvas {
                     scale(scale.toFloat(), scale.toFloat())
                     val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
@@ -134,8 +121,8 @@ class VideoFrameFetcher(
                     outBitmap.recycle()
                 }
             }
-            DrawableResult(
-                drawable = bitmap.toDrawable(options.context.resources),
+            ImageFetchResult(
+                image = bitmap.asImage(),
                 isSampled = scale < 1.0,
                 dataSource = DataSource.DISK
             )

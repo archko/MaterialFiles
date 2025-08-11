@@ -7,20 +7,24 @@ package me.zhanghai.android.files.coil
 
 import android.content.Context
 import android.content.pm.ApplicationInfo
+import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.os.ParcelFileDescriptor
-import androidx.core.graphics.drawable.toDrawable
-import coil.ImageLoader
-import coil.decode.ImageSource
-import coil.fetch.DrawableResult
-import coil.fetch.FetchResult
-import coil.fetch.Fetcher
-import coil.fetch.SourceResult
-import coil.key.Keyer
-import coil.request.Options
-import coil.size.Dimension
+import coil3.BitmapImage
+import coil3.ImageLoader
+import coil3.asImage
+import coil3.decode.DataSource
+import coil3.decode.ImageSource
+import coil3.fetch.FetchResult
+import coil3.fetch.Fetcher
+import coil3.fetch.ImageFetchResult
+import coil3.fetch.SourceFetchResult
+import coil3.key.Keyer
+import coil3.request.Options
+import coil3.size.Dimension
 import java8.nio.file.Path
 import java8.nio.file.attribute.BasicFileAttributes
+import me.zhanghai.android.files.App
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.compat.use
 import me.zhanghai.android.files.file.MimeType
@@ -28,7 +32,6 @@ import me.zhanghai.android.files.file.asMimeType
 import me.zhanghai.android.files.file.isApk
 import me.zhanghai.android.files.file.isImage
 import me.zhanghai.android.files.file.isMedia
-import me.zhanghai.android.files.file.isPdf
 import me.zhanghai.android.files.file.isVideo
 import me.zhanghai.android.files.file.lastModifiedInstant
 import me.zhanghai.android.files.filelist.isRemotePath
@@ -48,6 +51,7 @@ import me.zhanghai.android.files.util.isMediaMetadataRetrieverCompatible
 import me.zhanghai.android.files.util.runWithCancellationSignal
 import me.zhanghai.android.files.util.setDataSource
 import me.zhanghai.android.files.util.valueCompat
+import okio.FileSystem
 import okio.buffer
 import okio.source
 import java.io.Closeable
@@ -67,17 +71,15 @@ class PathAttributesFetcher(
     private val imageLoader: ImageLoader,
     private val appIconFetcherFactory: AppIconFetcher.Factory<Path>,
     private val videoFrameFetcherFactory: VideoFrameFetcher.Factory<Path>,
-    private val pdfPageFetcherFactory: PdfPageFetcher.Factory<Path>
+    private val pdfPageFetcherFactory: PdfPageFetcher.Factory<Path>,
 ) : Fetcher {
     override suspend fun fetch(): FetchResult? {
         val (path, attributes) = data
         val (width, height) = options.size
         // @see android.provider.MediaStore.ThumbnailConstants.MINI_SIZE
         val isThumbnail = width is Dimension.Pixels && width.px <= 512
-            && height is Dimension.Pixels && height.px <= 384
+                && height is Dimension.Pixels && height.px <= 384
         if (isThumbnail) {
-            width as Dimension.Pixels
-            height as Dimension.Pixels
             if (path.isDocumentPath && attributes.documentSupportsThumbnail) {
                 val thumbnail = runWithCancellationSignal { signal ->
                     try {
@@ -90,15 +92,15 @@ class PathAttributesFetcher(
                     }
                 }
                 if (thumbnail != null) {
-                    return DrawableResult(
-                        thumbnail.toDrawable(options.context.resources), true, path.dataSource
+                    return ImageFetchResult(
+                        thumbnail.asImage(), true, path.dataSource
                     )
                 }
             }
             if (path.isRemotePath) {
                 // FTP doesn't support random access and requires one connection per parallel read.
                 val shouldReadRemotePath = !path.isFtpPath
-                    && Settings.READ_REMOTE_FILES_FOR_THUMBNAIL.valueCompat
+                        && Settings.READ_REMOTE_FILES_FOR_THUMBNAIL.valueCompat
                 if (!shouldReadRemotePath) {
                     error("Cannot read $path for thumbnail")
                 }
@@ -113,13 +115,29 @@ class PathAttributesFetcher(
                     e.printStackTrace()
                 }
             }
+
             mimeType.isImage || mimeType == MimeType.GENERIC -> {
                 val inputStream = path.newInputStream()
-                return SourceResult(
-                    ImageSource(inputStream.source().buffer(), options.context),
+                val length = inputStream.available()
+                if (length > 10_000_000) {
+                    val bitmap = BitmapFactory.decodeResource(
+                        App.app!!.resources,
+                        R.drawable.file_image_icon
+                    )
+                    val imageBitmap: BitmapImage = bitmap.asImage()
+
+                    return ImageFetchResult(
+                        image = imageBitmap,
+                        dataSource = DataSource.MEMORY,
+                        isSampled = false
+                    )
+                }
+                return SourceFetchResult(
+                    source = ImageSource(inputStream.source().buffer(), FileSystem.SYSTEM, null),
                     if (mimeType != MimeType.GENERIC) mimeType.value else null, path.dataSource
                 )
             }
+
             mimeType.isMedia && path.isMediaMetadataRetrieverCompatible -> {
                 val embeddedPicture = try {
                     MediaMetadataRetriever().use { retriever ->
@@ -131,9 +149,9 @@ class PathAttributesFetcher(
                     null
                 }
                 if (embeddedPicture != null) {
-                    return SourceResult(
+                    return SourceFetchResult(
                         ImageSource(
-                            embeddedPicture.inputStream().source().buffer(), options.context
+                            embeddedPicture.inputStream().source().buffer(), FileSystem.SYSTEM, null
                         ), null, path.dataSource
                     )
                 }
@@ -183,9 +201,17 @@ class PathAttributesFetcher(
             override fun openParcelFileDescriptor(data: Path): ParcelFileDescriptor =
                 when {
                     data.isLinuxPath ->
-                        ParcelFileDescriptor.open(data.toFile(), ParcelFileDescriptor.MODE_READ_ONLY)
+                        ParcelFileDescriptor.open(
+                            data.toFile(),
+                            ParcelFileDescriptor.MODE_READ_ONLY
+                        )
+
                     data.isDocumentPath ->
-                        DocumentResolver.openParcelFileDescriptor(data as DocumentResolver.Path, "r")
+                        DocumentResolver.openParcelFileDescriptor(
+                            data as DocumentResolver.Path,
+                            "r"
+                        )
+
                     else -> throw IllegalArgumentException(data.toString())
                 }
         }
@@ -196,8 +222,11 @@ class PathAttributesFetcher(
             imageLoader: ImageLoader
         ): Fetcher =
             PathAttributesFetcher(
-                data, options, imageLoader, appIconFetcherFactory, videoFrameFetcherFactory,
-                pdfPageFetcherFactory
+                data, options,
+                imageLoader,
+                appIconFetcherFactory,
+                videoFrameFetcherFactory,
+                pdfPageFetcherFactory,
             )
     }
 }

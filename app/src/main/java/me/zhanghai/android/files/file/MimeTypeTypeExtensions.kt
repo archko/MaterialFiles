@@ -5,6 +5,9 @@
 
 package me.zhanghai.android.files.file
 
+val MimeType.isTiff: Boolean
+    get() = this == MimeType.IMAGE_TIFF
+
 val MimeType.isApk: Boolean
     get() = this == MimeType.APK
 

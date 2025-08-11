@@ -21,8 +21,8 @@ import androidx.core.view.isVisible
 import androidx.core.widget.NestedScrollView
 import androidx.core.widget.doAfterTextChanged
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
-import coil.dispose
-import coil.load
+import coil3.dispose
+import coil3.load
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.parcelize.Parceler
 import kotlinx.parcelize.Parcelize
@@ -178,7 +178,7 @@ class FileJobConflictDialogFragment : AppCompatDialogFragment() {
             val hasAppIconBadge = appDirectoryPackageName != null
             isVisible = hasAppIconBadge
             if (hasAppIconBadge) {
-                load(AppIconPackageName(appDirectoryPackageName!!))
+                load(AppIconPackageName(appDirectoryPackageName))
             }
         }
         badgeImage.apply {
@@ -196,7 +196,7 @@ class FileJobConflictDialogFragment : AppCompatDialogFragment() {
             val hasBadge = badgeIconRes != null
             isVisible = hasBadge
             if (hasBadge) {
-                setImageResource(badgeIconRes!!)
+                setImageResource(badgeIconRes)
             } else {
                 setImageDrawable(null)
             }

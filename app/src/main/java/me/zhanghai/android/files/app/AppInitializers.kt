@@ -10,7 +10,6 @@ import android.os.Build
 import android.webkit.WebView
 import jcifs.context.SingletonContext
 import me.zhanghai.android.files.BuildConfig
-import me.zhanghai.android.files.coil.initializeCoil
 import me.zhanghai.android.files.filejob.fileJobNotificationTemplate
 import me.zhanghai.android.files.ftpserver.ftpServerServiceNotificationTemplate
 import me.zhanghai.android.files.hiddenapi.HiddenApi
@@ -33,7 +32,6 @@ val appInitializers = listOf(
     ::initializeCrashlytics,
     ::disableHiddenApiChecks,
     ::initializeWebViewDebugging,
-    ::initializeCoil,
     ::initializeFileSystemProviders,
     ::upgradeApp,
     ::initializeLiveDataObjects,
