@@ -5,6 +5,7 @@ import android.content.Context
 import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
@@ -56,6 +57,7 @@ class VideoPlayerDelegate(private var activity: Activity) : View.OnTouchListener
         set(value) { //默认实现方式，可省略
             field = value //value是setter()方法参数值，field是属性本身
         }
+    private var volumeAccumulator = 0f
 
     fun toggleLock() {
         isLock = !isLock
@@ -158,132 +160,6 @@ class VideoPlayerDelegate(private var activity: Activity) : View.OnTouchListener
 
     private val mLongPressBackRunnable: Runnable = Runnable { mExoPlayer?.setPlaybackSpeed(1f) }
 
-    /*@SuppressLint("ClickableViewAccessibility")
-    override fun onTouch(view: View?, event: MotionEvent): Boolean {
-        val x = event.x
-        val y = event.y
-        when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
-                Log.d(TAG, "View ACTION_DOWN:$isLock")
-                seekChanged = 0
-                touchAction = TOUCH_DOWN
-                touchTime = SystemClock.uptimeMillis()
-                mLastMotionX = x
-                mLastMotionY = y
-                if (isLock) {
-                    return true
-                }
-
-                handler.removeCallbacks(mLongPressBackRunnable)
-                handler.postDelayed(
-                    mLongPressFastRunnable,
-                    ViewConfiguration.getLongPressTimeout().toLong()
-                )
-                return true
-            }
-
-            MotionEvent.ACTION_MOVE -> {
-                if (isLock) {
-                    return true
-                }
-                val xChanged = if (mLastMotionY != -1f) {
-                    x - mLastMotionX //值大于0,是从左向右
-                } else {
-                    0f
-                }
-                val yChanged = if (mLastMotionY != -1f) {
-                    mLastMotionY - y
-                } else {
-                    0f
-                }
-
-                mLastMotionX = x
-                mLastMotionY = y
-
-                Log.d(TAG, "View ACTION_MOVE:$touchAction, xChanged:$xChanged, yChanged:$yChanged")
-                val coef = abs(yChanged / xChanged)
-                if (touchAction == TOUCH_LONG_PRESS) {
-                    //如果已经是长按了,不作处理
-                    return true
-                } else {
-                    handler.removeCallbacks(mLongPressFastRunnable)
-                    handler.removeCallbacks(mLongPressBackRunnable)
-
-                    //如果已经是左右滑动的,就继续之前的,如果是垂直的也是继续之前的,否则先置为TOUCH_MOVE_INIT
-                    if (touchAction == TOUCH_MOVE_HORIZONTAL) {
-                        seek(xChanged)
-                    } else if (touchAction == TOUCH_MOVE_VERTICAL_LEFT) {
-                        updateBrightness(yChanged)
-                    } else if (touchAction == TOUCH_MOVE_VERTICAL_RIGHT) {
-                        if (abs(yChanged) > 1) {
-                            updateVolume(yChanged)
-                        }
-                    } else if (touchAction == TOUCH_MOVE_INIT) {
-                        touchAction =
-                            if (coef > 1) { //上下滑动
-                                if (x < halfScreenWidth) {
-                                    TOUCH_MOVE_VERTICAL_LEFT
-                                } else {
-                                    TOUCH_MOVE_VERTICAL_RIGHT
-                                }
-                            } else {    //左右滑动
-                                TOUCH_MOVE_HORIZONTAL
-                            }
-
-                        //处理相同的滑动效果,否则会出现一会进度,一会亮度一会声音
-                        if (touchAction == TOUCH_MOVE_VERTICAL_LEFT) {
-                            updateBrightness(yChanged)
-                        } else if (touchAction == TOUCH_MOVE_VERTICAL_RIGHT) {
-                            updateVolume(xChanged)
-                        } else if (touchAction == TOUCH_MOVE_HORIZONTAL) {
-                            seek(xChanged)
-                        }
-                    } else {
-                        //刚进入移动,先判断是否移动的距离大于1,如果移动距离不够,防抖动,就不处理.
-                        if (abs(xChanged) >= touchSlop || abs(yChanged) >= touchSlop) {
-                            touchAction = TOUCH_MOVE_INIT
-                        }
-                    }
-                }
-                return true
-            }
-
-            MotionEvent.ACTION_UP -> {
-                val delta = SystemClock.uptimeMillis() - touchTime
-                Log.d(TAG, "View ACTION_UP.delta:$delta,action:$touchAction")
-                handler.removeCallbacks(mLongPressFastRunnable)
-                if (touchAction == TOUCH_LONG_PRESS) {
-                    handler.post(mLongPressBackRunnable)
-                }
-
-                if (touchAction == TOUCH_MOVE_HORIZONTAL) {
-                    Log.d(TAG, "View ACTION_UP seek end:$seekChanged")
-                    delegateTouchListener?.seekEnd(seekChanged)
-                } else if (touchAction == TOUCH_MOVE_INIT || touchAction == TOUCH_DOWN) {
-                    Log.d(TAG, "View ACTION_UP,click")
-                    delegateTouchListener?.run {
-                        this.click()
-                    }
-                } else {
-                    Log.d(TAG, "View ACTION_UP long click")
-                    delegateTouchListener?.hideTip()
-                }
-                touchAction = TOUCH_IDLE
-                return true
-            }
-
-            MotionEvent.ACTION_CANCEL -> {
-                delegateTouchListener?.hideTip()
-                handler.removeCallbacks(mLongPressFastRunnable)
-                if (touchAction == TOUCH_LONG_PRESS) {
-                    handler.post(mLongPressBackRunnable)
-                }
-            }
-        }
-
-        return false
-    }*/
-
     private var firstScroll = true
     private var gestureListener: GestureDetector.SimpleOnGestureListener =
         object : GestureDetector.SimpleOnGestureListener() {
@@ -291,6 +167,7 @@ class VideoPlayerDelegate(private var activity: Activity) : View.OnTouchListener
                 firstScroll = true // 设定是触摸屏幕后第一次scroll的标志
                 Log.i(TAG, "onDown")
                 seekChanged = 0
+                volumeAccumulator = 0f
                 return false
             }
 
@@ -409,37 +286,87 @@ class VideoPlayerDelegate(private var activity: Activity) : View.OnTouchListener
         if (yChanged == 0.0f) {
             return
         }
-        val last = getSystemVolume()
-        if (yChanged > 0) {
-            volumeUp()
-        } else {
-            volumeDown()
+
+        val audioManager = audioManager ?: return
+        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        val lastVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+
+        // 定义一个变化因子，用于控制滑动的灵敏度。可以根据需要调整。
+        val sensitivity = maxVolume / activity.window.decorView.height.toFloat() * 1.5f
+
+        // 将本次的滑动距离添加到累积值中。
+        // yChanged 为负时，volumeAccumulator 减少；为正时，增加。
+        volumeAccumulator += yChanged * sensitivity
+
+        var newVolume = lastVolume
+
+        // 检查累积值是否达到一个完整的音量单位（-1或1）。
+        while (volumeAccumulator >= 1.0f) {
+            newVolume += 1
+            volumeAccumulator -= 1.0f
         }
-        val current = getSystemVolume()
-        Log.d(TAG, "View setVolume.last:$last, current:$current, yChanged:$yChanged")
-        delegateTouchListener?.volumeChange(last, current)
+        while (volumeAccumulator <= -1.0f) {
+            newVolume -= 1
+            volumeAccumulator += 1.0f
+        }
+
+        // 确保音量在合法范围内
+        if (newVolume > maxVolume) {
+            newVolume = maxVolume
+        } else if (newVolume < 0) {
+            newVolume = 0
+        }
+
+        // 只有当音量真正发生变化时才调用 setStreamVolume
+        if (newVolume != lastVolume) {
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, newVolume, 0)
+        }
+
+        val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        Log.d(TAG, "View setVolume.last:$lastVolume, current:$currentVolume, yChanged:$yChanged, accumulator:$volumeAccumulator")
+        delegateTouchListener?.volumeChange(lastVolume, currentVolume)
     }
 
     private fun updateBrightness(yChanged: Float) {
         if (yChanged == 0.0f) {
             return
         }
-        //Log.d(TAG, "View updateBrightness:$brightness, yChanged:$yChanged")
-        val currentBright = brightness
-        var target = if (yChanged > 0) {
-            currentBright + 0.01
-        } else {
-            currentBright - 0.01
+
+        val window: Window = activity.window ?: return
+        val lp: WindowManager.LayoutParams = window.attributes
+
+        // 获取当前亮度
+        var currentBright = lp.screenBrightness
+        if (currentBright < 0) { // 如果是 -1.0f (BRIGHTNESS_OVERRIDE_NONE)，使用系统亮度作为基准
+            try {
+                currentBright = Settings.System.getInt(
+                    activity.contentResolver,
+                    Settings.System.SCREEN_BRIGHTNESS
+                ) / 255.0f
+            } catch (e: Settings.SettingNotFoundException) {
+                e.printStackTrace()
+                currentBright = 0.5f // 默认值
+            }
         }
 
-        if (target > 1) {
-            target = 1.0
-        } else if (target < 0) {
-            target = 0.0
+        // 计算滑动距离与屏幕高度的比例
+        val deltaBrightness = yChanged / activity.window.decorView.height * 0.5f
+
+        // 更新亮度
+        var target = currentBright + deltaBrightness
+
+        // 确保亮度在合法范围内 [0.0, 1.0]
+        if (target > 1.0) {
+            target = 1.0f
+        } else if (target < 0.0) {
+            target = 0.0f
         }
 
-        setBrightness(target)
-        delegateTouchListener?.brightnessChange(target)
+        // 设置新亮度
+        lp.screenBrightness = target
+        window.attributes = lp
+
+        delegateTouchListener?.brightnessChange(target.toDouble())
     }
 
     interface DelegateTouchListener {
